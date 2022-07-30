@@ -21,14 +21,33 @@ class Game
 
 	# main driver function
 	def play_game
-		not_finished = false
 		player = players[players.length % round]
 
 		# game loop
-		while not_finished
-			not_finished = play_turn(grid, player)
+		loop do
+			play_turn(grid, player)
+			break if game_over?
 		end
 
+	end
+
+
+	#unimplemented
+	def play_turn
+		return
+	end
+
+
+	def game_over?
+		if connect_four?
+			puts "player #{player.id} has connect four! Congratulations!"
+			true
+		elsif grid.full?
+			puts "the grid is full, neither player wins."
+			true
+	  else
+			false
+		end
 	end
 
 
@@ -64,7 +83,7 @@ class Turn
 end
 
 
-# x by y grid, maybe also manages the 'dropping' logic
+# x by y grid, also manages the 'dropping' logic
 class Grid
 
 	attr_reader :height, :width, :grid
@@ -72,26 +91,23 @@ class Grid
 	def initialize(height, width)
 		@height = height
 		@width  = width
-		@grid   = build_grid
+		@grid   = build_grid(height, width)
 	end
 
 
-	private
-
-
-	def self.build_grid(h, w)
+	def build_grid(h, w)
 		Array.new(h) { Array.new(w) { Tile.new } }
 	end
 
 
-	def drop_token!(column, player_id)
-		if column > width || column < 1
+	def drop_token!(column, player)
+		if column > width || column < 0
 			raise StandardError, "must place token within the grid"
-		elsif grid[height-1][column-1].occupied?
+		elsif grid[0][column].occupied?
 			raise StandardError, "column is already full"
 		else
 			row = find_token_row(column)
-			grid[row][column].occupy(player_id)
+			grid[row][column].occupy(player)
 			grid
 		end
 	end
@@ -102,16 +118,15 @@ class Grid
 		(0...grid.length).each do |r|
 			grid_string << "\n"
 			(0...grid[0].length).each do |c|
-				grid_string << grid[r][c].to_s
+				grid_string << grid[r][c].to_s + " "
 			end
 		end
+		grid_string
 	end
 
 
-	private
-
 	def find_token_row(column)
-		(0...height).each do |i|
+		(height-1).downto(0).each do |i|
 			return i if grid[i][column].empty?
 		end
 	end
@@ -128,16 +143,20 @@ class Tile
 		@player = nil
 	end
 
+	def occupy(player)
+		@player = player
+	end
+
 	def occupied?
-		player.nil?
+		!empty?
 	end
 
 	def empty?
-		!occupied?
+		player.nil?
 	end
 
 	def to_s
-		occupied? ? played.id : "x"
+		occupied? ? player.id.to_s : "x"
 	end
 
 end
