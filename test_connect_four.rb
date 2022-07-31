@@ -1,79 +1,70 @@
 require "./play_connect_four"
 
-tests = []
+RSpec.describe '#generate_players' do
+	it 'generates new players' do
+		
+		players = Game.generate_players(2)
 
-test_generate_players = -> do
-	players = Game.generate_players(2)
-
-	assert(players[0].id, 1)
-	assert(players[1].id, 2)
-end
-
-
-test_build_grid = -> do
-	grid = Grid.new(8, 10).grid
-
-	assert(grid.length, 8)
-	assert(grid[0].length, 10)
-	assert(grid[0][0].class.name, "Tile")
-end
-
-
-test_occupy = -> do
-	player = Player.new(2)
-	tile = Tile.new
-	tile.occupy(player)
-	assert(tile.occupied?, true, "check if tile is occupied")
-end
-
-
-test_drop_token = -> do
-	grid = Grid.new(8, 10)
-	player = Player.new(2)
-
-	assert(grid.grid[0][0].occupied?, false)
-
-	grid.drop_token!(1, player)
-
-	assert(grid.grid[7][1].occupied?, true, "should have token in seventh row, first column")
-
-	grid.drop_token!(1, player)
-	assert(grid.grid[6][1].occupied?, true, "should have token in sixth row, first column")
-end
-
-
-test_empty = -> do
-	tile = Tile.new
-	assert(tile.empty?, true, "tile should be empty")
-end
-
-
-test_find_token_row = -> do
-	grid = Grid.new(8, 10)
-	player = Player.new(2)
-
-	assert(grid.grid[7][0].occupied?, false)
-	row = grid.find_token_row(0)
-	assert(row, 7, "should be seventh row")
-end
-
-tests.append(test_generate_players)
-tests.append(test_build_grid)
-tests.append(test_occupy)
-tests.append(test_drop_token)
-tests.append(test_empty)
-tests.append(test_find_token_row)
-
-
-def assert(obj1, obj2, expectation="")
-	if obj1 == obj2
-		puts "success!" + " #{expectation}"
-	else
-		puts "expected #{obj1} to equal #{obj2}" + ": #{expectation}"
+		expect(players[0].id).to eq(1)
+		expect(players[1].id).to eq(2)
 	end
 end
 
 
-tests.each do |t|
-	t.call
+RSpec.describe '#build_grid' do
+	it 'builds a grid of Tiles' do
+		grid = Grid.new(8, 10).grid
+
+		expect(grid.length).to eq(8)
+		expect(grid[0].length).to eq(10)
+		expect(grid[0][0].class.name).to eq("Tile")
+	end
 end
+
+
+RSpec.describe '#occupy' do
+	it 'occupies a tile with a player' do
+		player = Player.new(2)
+		tile = Tile.new
+		tile.occupy(player)
+		expect(tile.occupied?).to be(true)
+	end
+end
+
+
+RSpec.describe '#drop_token' do
+	it 'drops a token into the bottom row' do
+		grid = Grid.new(8, 10)
+		player = Player.new(2)
+
+		expect(grid.grid[0][0].occupied?).to be(false)
+
+		grid.drop_token!(1, player)
+
+		expect(grid.grid[7][1].occupied?).to be(true)
+
+		grid.drop_token!(1, player)
+		expect(grid.grid[6][1].occupied?).to be(true)
+	end
+end
+
+
+RSpec.describe '#empty' do
+	it 'shows a tile without a player is empty' do
+		tile = Tile.new
+		expect(tile.empty?).to be(true)
+	end
+end
+
+
+RSpec.describe '#find_token_row' do
+	it 'finds an unoccupied row' do
+		grid = Grid.new(8, 10)
+		player = Player.new(2)
+
+		expect(grid.grid[7][0].occupied?).to be(false)
+		row = grid.find_token_row(0)
+		expect(row).to eq(7)
+	end
+end
+
