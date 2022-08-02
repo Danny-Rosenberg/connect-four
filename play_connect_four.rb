@@ -7,39 +7,46 @@
 
 
 # runs the game, player input, initiates turns
+# for future, could make 'connect four' value variable (i.e. get 5 in a row, or 7 in a row to win)
 class Game
 
-	attr_reader :grid, :round_num, :player_turn, :players
+	attr_reader :grid, :round_num, :player_turn, :players, :turn
 
 	# define size of board
-	def initialize(grid_height, grid_width, num_players=2)
-		@grid      = setup_grid(grid_height, grid_width)
+	def initialize(grid_height:, grid_width:, num_players: 2, play_to: 4)
+		@grid      = Grid.new(grid_height, grid_width)
 		@round_num = 1
-		@players   = generate_players(num_players)
+		@players   = Game.generate_players(num_players)
+		@turn      = nil
+		@rules     = Rules.new(4)
 	end
 
 
 	# main driver function
 	def play_game
-		player = players[players.length % round]
+		player = players[players.length % round_num]
 
 		# game loop
 		loop do
-			play_turn(grid, player)
-			break if game_over?
+			@turn = play_turn(grid, player)
+			break if game_over?(turn)
+			round += 1
 		end
 
 	end
 
 
-	#unimplemented
+	# unimplemented
+	# returns the row and column of the last dropped token
 	def play_turn
+		# gather input
+		# create Turn object out of input
 		return
 	end
 
 
 	def game_over?
-		if connect_four?
+		if connect_four?(row, column, player)
 			puts "player #{player.id} has connect four! Congratulations!"
 			true
 		elsif grid.full?
@@ -51,17 +58,46 @@ class Game
 	end
 
 
-private
-
-
-	def setup_grid(height, width)
-		Grid.new(height, width)
+	# looks for four in a row tokens horizontally, vertically, and diagonally
+	# uses the most recently dropped token as a starting point
+	def connect_four?(row, column, player)
+		check_horizontally(row, column, player) ||
+			check_vertically(row, column, player) ||
+			check_diagonally(row, column, player)
 	end
 
-	
+
+	# TODO makes this a instance method
 	def self.generate_players(num_players)
 		(1..num_players).to_a.map { |id| Player.new(id) }
 	end
+
+
+	def check_horizontally(row, column, player, play_to=4)
+		left = [column - play_to + 1, 0].max
+		right = [column + play_to - 1, grid.width-1].min
+	
+		max_consec = 0
+		left.upto(right).each do |c|
+			max_consec = grid.grid[row][c].player == player ? max_consec + 1 : 0
+			if max_consec == play_to
+				return true
+			end
+		end
+		false
+	end
+
+end
+
+
+class Rules
+
+	attr_reader :play_to
+
+	def initialize(play_to=4)
+		@play_to = play_to
+	end
+
 
 end
 
@@ -79,6 +115,14 @@ end
 
 # orchestrates a single turn, probably just for a single player
 class Turn
+
+	attr_reader :current_player, :chosen_row, :chosen_column
+
+	def initialize(current_player)
+		@player 			 = player
+		@chosen_row    = nil
+		@chosen_column = nil
+	end
 
 end
 
@@ -102,9 +146,9 @@ class Grid
 
 	def drop_token!(column, player)
 		if column > width || column < 0
-			raise StandardError, "must place token within the grid"
+			raise OutOfBoundsError, "must place token within the grid"
 		elsif grid[0][column].occupied?
-			raise StandardError, "column is already full"
+			raise ColumnFullError, "column is already full"
 		else
 			row = find_token_row(column)
 			grid[row][column].occupy(player)
@@ -131,8 +175,20 @@ class Grid
 		end
 	end
 
+
+	def full?
+		(0...height).each do |r|
+			(0...width).each do |c|
+				return false if grid[r][c].empty?
+			end
+		end
+		true
+	end
+
 end
 
+class OutOfBoundsError < StandardError; end
+class ColumnFullError < StandardError; end
 
 # represents a single spot in the grid, if it has a token or not, whose token
 class Tile
